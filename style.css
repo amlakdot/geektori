@@ -1,3 +1,4 @@
+```css
 * {
     box-sizing: border-box;
 }
@@ -15,6 +16,7 @@
     --blue-hover: #2ea9d5;
 
     --green: #3fb950;
+    --red: #f85149;
     --orange: #d29922;
 
     --radius: 16px;
@@ -188,6 +190,18 @@ select {
     border-radius: var(--radius);
 
     min-width: 0;
+
+    transition:
+        border-color 0.2s,
+        transform 0.2s;
+}
+
+
+.stat-card:hover {
+    border-color:
+        rgba(37, 150, 190, 0.5);
+
+    transform: translateY(-2px);
 }
 
 
@@ -229,6 +243,107 @@ select {
     font-size: 12px;
 
     margin-top: 8px;
+}
+
+
+/* ============================================================
+   QUICK TOOLS
+   ============================================================ */
+
+.quick-tools {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, 1fr);
+
+    gap: 12px;
+
+    margin-bottom: 24px;
+}
+
+
+.quick-tool {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 12px;
+
+    padding: 16px 18px;
+
+    background: var(--surface);
+
+    border: 1px solid var(--border);
+
+    border-radius: 13px;
+
+    color: var(--text);
+
+    text-decoration: none;
+
+    transition:
+        background 0.2s,
+        border-color 0.2s,
+        transform 0.2s;
+}
+
+
+.quick-tool:hover {
+    background: var(--surface-2);
+
+    border-color:
+        rgba(37, 150, 190, 0.6);
+
+    transform: translateY(-2px);
+}
+
+
+.quick-tool-info {
+    min-width: 0;
+}
+
+
+.quick-tool-title {
+    display: block;
+
+    font-size: 13px;
+
+    font-weight: 700;
+
+    margin-bottom: 4px;
+}
+
+
+.quick-tool-description {
+    display: block;
+
+    color: var(--muted);
+
+    font-size: 11px;
+}
+
+
+.quick-tool-icon {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    width: 36px;
+    height: 36px;
+
+    flex-shrink: 0;
+
+    border-radius: 10px;
+
+    background:
+        rgba(37, 150, 190, 0.12);
+
+    color: var(--blue);
+
+    font-size: 17px;
 }
 
 
@@ -574,6 +689,249 @@ select {
 
 
 /* ============================================================
+   PRODUCT MOVEMENT
+   ============================================================ */
+
+.rank-change {
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 4px;
+
+    margin-top: 8px;
+
+    font-size: 11px;
+
+    font-weight: 700;
+}
+
+
+.rank-change.up {
+    color: var(--green);
+}
+
+
+.rank-change.down {
+    color: var(--red);
+}
+
+
+.rank-change.same {
+    color: var(--muted);
+}
+
+
+/* ============================================================
+   ANALYTICS SECTIONS
+   ============================================================ */
+
+.analytics-section {
+    margin-top: 30px;
+}
+
+
+.section-header {
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    gap: 15px;
+
+    margin-bottom: 14px;
+}
+
+
+.section-header h2 {
+    margin: 0;
+
+    font-size: 20px;
+}
+
+
+.section-header p {
+    margin: 5px 0 0;
+
+    color: var(--muted);
+
+    font-size: 12px;
+}
+
+
+/* ============================================================
+   ANALYTICS GRID
+   ============================================================ */
+
+.analytics-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+
+    gap: 14px;
+}
+
+
+.analytics-card {
+    padding: 18px;
+
+    background: var(--surface);
+
+    border: 1px solid var(--border);
+
+    border-radius: var(--radius);
+
+    min-width: 0;
+}
+
+
+.analytics-card h3 {
+    margin: 0 0 15px;
+
+    font-size: 14px;
+}
+
+
+.analytics-list {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 9px;
+}
+
+
+.analytics-item {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 10px;
+
+    padding: 10px;
+
+    border-radius: 9px;
+
+    background: var(--surface-2);
+}
+
+
+.analytics-item-name {
+    min-width: 0;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+
+    font-size: 12px;
+}
+
+
+.analytics-item-value {
+    flex-shrink: 0;
+
+    font-size: 11px;
+
+    font-weight: 700;
+}
+
+
+.analytics-item-value.up {
+    color: var(--green);
+}
+
+
+.analytics-item-value.down {
+    color: var(--red);
+}
+
+
+.analytics-item-value.neutral {
+    color: var(--muted);
+}
+
+
+/* ============================================================
+   CATEGORY RANKING
+   ============================================================ */
+
+.category-ranking {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 10px;
+}
+
+
+.category-ranking-item {
+    display: grid;
+
+    grid-template-columns:
+        32px minmax(0, 1fr) auto;
+
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 11px;
+
+    background: var(--surface-2);
+
+    border-radius: 9px;
+}
+
+
+.category-ranking-number {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    width: 28px;
+    height: 28px;
+
+    border-radius: 8px;
+
+    background:
+        rgba(37, 150, 190, 0.12);
+
+    color: var(--blue);
+
+    font-size: 11px;
+
+    font-weight: 800;
+}
+
+
+.category-ranking-name {
+    min-width: 0;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+
+    font-size: 12px;
+}
+
+
+.category-ranking-count {
+    color: var(--muted);
+
+    font-size: 11px;
+}
+
+
+/* ============================================================
    EMPTY
    ============================================================ */
 
@@ -720,6 +1078,18 @@ footer {
             repeat(3, minmax(0, 1fr));
     }
 
+
+    .quick-tools {
+        grid-template-columns:
+            repeat(2, 1fr);
+    }
+
+
+    .analytics-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
 }
 
 
@@ -745,6 +1115,11 @@ footer {
     .products-grid {
         grid-template-columns:
             repeat(2, minmax(0, 1fr));
+    }
+
+
+    .analytics-grid {
+        grid-template-columns: 1fr;
     }
 
 }
@@ -787,6 +1162,11 @@ footer {
     }
 
 
+    .quick-tools {
+        grid-template-columns: 1fr;
+    }
+
+
     .controls {
         grid-template-columns: 1fr;
     }
@@ -811,8 +1191,16 @@ footer {
     }
 
 
+    .section-header {
+        align-items: flex-start;
+
+        flex-direction: column;
+    }
+
+
     footer {
         flex-direction: column;
     }
 
 }
+```

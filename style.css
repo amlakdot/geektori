@@ -2,6 +2,7 @@
     box-sizing: border-box;
 }
 
+
 :root {
     --bg: #0d1117;
     --surface: #161b22;
@@ -392,12 +393,66 @@ button {
 }
 
 
+/* ============================================================
+   MINI LIST
+   ============================================================ */
+
 .mini-list {
     display: flex;
 
     flex-direction: column;
 
     gap: 7px;
+
+    /*
+     * ارتفاع ثابت برای لیست
+     * تا محتوا داخل خود کارت اسکرول شود.
+     */
+    max-height: 270px;
+
+    overflow-y: auto;
+
+    overflow-x: hidden;
+
+    padding-left: 3px;
+
+    /*
+     * جلوگیری از تغییر اندازه کارت
+     */
+    min-height: 0;
+
+    /*
+     * اسکرول‌بار Firefox
+     */
+    scrollbar-width: thin;
+
+    scrollbar-color:
+        var(--border)
+        transparent;
+}
+
+
+/* Chrome / Edge / Safari */
+
+.mini-list::-webkit-scrollbar {
+    width: 5px;
+}
+
+
+.mini-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+
+.mini-list::-webkit-scrollbar-thumb {
+    background: var(--border);
+
+    border-radius: 999px;
+}
+
+
+.mini-list::-webkit-scrollbar-thumb:hover {
+    background: var(--border-light);
 }
 
 
@@ -412,11 +467,22 @@ button {
 
     min-width: 0;
 
+    flex-shrink: 0;
+
     padding: 8px 10px;
 
     border-radius: 8px;
 
     background: rgba(255, 255, 255, 0.025);
+
+    transition:
+        background 0.15s;
+}
+
+
+.mini-item:hover {
+    background:
+        rgba(255, 255, 255, 0.05);
 }
 
 

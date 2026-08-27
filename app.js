@@ -1,5 +1,6 @@
 "use strict";
 
+
 const DATA_URL = "./data/current.json";
 const STATS_URL = "./data/stats.json";
 
@@ -418,7 +419,7 @@ function renderTodayGrowth() {
 
     elements.todayGrowthList.innerHTML =
         growth
-            .slice(0, 4)
+            .slice(0, 100)
             .map(
                 item =>
                     miniProduct(
@@ -491,7 +492,7 @@ function renderDecline() {
 
     elements.declineList.innerHTML =
         decline
-            .slice(0, 4)
+            .slice(0, 100)
             .map(
                 item =>
                     miniProduct(
@@ -526,7 +527,7 @@ function renderFreshBest() {
                         a.sold_count || 0
                     )
             )
-            .slice(0, 5);
+            .slice(0, 100);
 
 
     if (!fresh.length) {
@@ -638,7 +639,7 @@ function renderCategoryRanking() {
                     b.sales -
                     a.sales
             )
-            .slice(0, 5);
+            .slice(0, 100);
 
 
     if (!ranking.length) {
@@ -830,6 +831,7 @@ function applyFilters() {
                                 search
                             )
                         ) {
+
                             return false;
                         }
                     }
@@ -980,6 +982,7 @@ function sortProducts(products) {
         state.view !==
         "all"
     ) {
+
         return;
     }
 
@@ -1477,6 +1480,7 @@ function changePage(page) {
         page < 1 ||
         page > totalPages
     ) {
+
         return;
     }
 
@@ -1657,12 +1661,6 @@ document
                     state.view =
                         view;
 
-
-                    /*
-                     * وقتی یکی از تب‌های تحلیلی
-                     * انتخاب می‌شود، Sort دستی
-                     * دیگر نباید روی نتیجه اثر بگذارد.
-                     */
 
                     if (
                         view !==

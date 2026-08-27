@@ -1,18 +1,23 @@
-```javascript
 "use strict";
 
 const DATA_URL = "./data/current.json";
 const STATS_URL = "./data/stats.json";
 
 const state = {
+
     products: [],
     filteredProducts: [],
-    categories: new Map(),
+
     stats: null,
+
+    categories: new Map(),
 
     search: "",
     category: "all",
+
     sort: "rank",
+
+    view: "all",
 
     page: 1,
     perPage: 48
@@ -24,29 +29,81 @@ const state = {
 // ============================================================
 
 const elements = {
-    totalProducts: document.getElementById("totalProducts"),
-    topProduct: document.getElementById("topProduct"),
-    totalCategories: document.getElementById("totalCategories"),
-    lastUpdate: document.getElementById("lastUpdate"),
 
-    searchInput: document.getElementById("searchInput"),
-    clearSearch: document.getElementById("clearSearch"),
+    totalProducts:
+        document.getElementById("totalProducts"),
 
-    categoryFilter: document.getElementById("categoryFilter"),
-    sortSelect: document.getElementById("sortSelect"),
+    topProduct:
+        document.getElementById("topProduct"),
 
-    resultsCount: document.getElementById("resultsCount"),
-    loadingText: document.getElementById("loadingText"),
+    totalCategories:
+        document.getElementById("totalCategories"),
 
-    productsGrid: document.getElementById("productsGrid"),
-    emptyState: document.getElementById("emptyState"),
+    lastUpdate:
+        document.getElementById("lastUpdate"),
 
-    pagination: document.getElementById("pagination")
+
+    searchInput:
+        document.getElementById("searchInput"),
+
+    clearSearch:
+        document.getElementById("clearSearch"),
+
+
+    categoryFilter:
+        document.getElementById("categoryFilter"),
+
+    sortSelect:
+        document.getElementById("sortSelect"),
+
+
+    resultsCount:
+        document.getElementById("resultsCount"),
+
+    loadingText:
+        document.getElementById("loadingText"),
+
+
+    productsGrid:
+        document.getElementById("productsGrid"),
+
+    emptyState:
+        document.getElementById("emptyState"),
+
+    pagination:
+        document.getElementById("pagination"),
+
+
+    todayGrowthTitle:
+        document.getElementById("todayGrowthTitle"),
+
+    todayGrowthValue:
+        document.getElementById("todayGrowthValue"),
+
+    todayGrowthList:
+        document.getElementById("todayGrowthList"),
+
+
+    declineTitle:
+        document.getElementById("declineTitle"),
+
+    declineValue:
+        document.getElementById("declineValue"),
+
+    declineList:
+        document.getElementById("declineList"),
+
+
+    freshBestList:
+        document.getElementById("freshBestList"),
+
+    categoryRanking:
+        document.getElementById("categoryRanking")
 };
 
 
 // ============================================================
-// LOAD DATA
+// LOAD
 // ============================================================
 
 async function loadData() {
@@ -55,45 +112,68 @@ async function loadData() {
 
         setLoading(true);
 
-        const cacheBust = `?v=${Date.now()}`;
 
-        const [currentResponse, statsResponse] =
-            await Promise.all([
-                fetch(`${DATA_URL}${cacheBust}`),
-                fetch(`${STATS_URL}${cacheBust}`)
-            ]);
+        const [
+            currentResponse,
+            statsResponse
+        ] = await Promise.all([
+
+            fetch(
+                `${DATA_URL}?v=${Date.now()}`
+            ),
+
+            fetch(
+                `${STATS_URL}?v=${Date.now()}`
+            )
+
+        ]);
+
 
         if (!currentResponse.ok) {
+
             throw new Error(
-                `current.json HTTP ${currentResponse.status}`
+                `Current data HTTP ${currentResponse.status}`
             );
         }
 
-        const data =
+
+        const currentData =
             await currentResponse.json();
 
-        let stats = null;
+
+        let statsData = null;
+
 
         if (statsResponse.ok) {
-            stats = await statsResponse.json();
+
+            statsData =
+                await statsResponse.json();
         }
 
-        state.stats = stats;
 
         state.products =
-            Array.isArray(data.products)
-                ? data.products
+            Array.isArray(
+                currentData.products
+            )
+                ? currentData.products
                 : [];
+
+
+        state.stats =
+            statsData;
+
 
         buildCategories();
 
-        renderStats(data);
+        renderStats(
+            currentData
+        );
 
         renderCategoryFilter();
 
-        applyFilters();
+        renderAnalytics();
 
-        renderAdvancedSections();
+        applyFilters();
 
         setLoading(false);
 
@@ -104,7 +184,9 @@ async function loadData() {
             error
         );
 
+
         setLoading(false);
+
 
         elements.loadingText.textContent =
             "خطا در دریافت اطلاعات";
@@ -120,12 +202,16 @@ function buildCategories() {
 
     state.categories.clear();
 
+
     for (const product of state.products) {
 
         const categories =
-            Array.isArray(product.categories)
+            Array.isArray(
+                product.categories
+            )
                 ? product.categories
                 : [];
+
 
         for (const category of categories) {
 
@@ -135,8 +221,13 @@ function buildCategories() {
             ) {
 
                 state.categories.set(
-                    String(category.id),
-                    category.name || "بدون نام"
+
+                    String(
+                        category.id
+                    ),
+
+                    category.name ||
+                    "بدون نام"
                 );
             }
         }
@@ -146,21 +237,19 @@ function buildCategories() {
 
 function renderCategoryFilter() {
 
-    if (!elements.categoryFilter) {
-        return;
-    }
-
     const categories = [
         ...state.categories.entries()
     ];
 
+
     categories.sort(
         (a, b) =>
-            String(a[1]).localeCompare(
-                String(b[1]),
+            a[1].localeCompare(
+                b[1],
                 "fa"
             )
     );
+
 
     elements.categoryFilter.innerHTML = `
         <option value="all">
@@ -168,16 +257,22 @@ function renderCategoryFilter() {
         </option>
     `;
 
+
     for (
         const [id, name]
         of categories
     ) {
 
         const option =
-            document.createElement("option");
+            document.createElement(
+                "option"
+            );
+
 
         option.value = id;
+
         option.textContent = name;
+
 
         elements.categoryFilter.appendChild(
             option
@@ -192,55 +287,503 @@ function renderCategoryFilter() {
 
 function renderStats(data) {
 
-    if (elements.totalProducts) {
-
-        elements.totalProducts.textContent =
-            formatNumber(
-                data.total_products ??
-                state.products.length
-            );
-    }
+    elements.totalProducts.textContent =
+        formatNumber(
+            data.total_products ??
+            state.products.length
+        );
 
 
     const top =
         [...state.products]
             .sort(
                 (a, b) =>
-                    (a.rank || 999999) -
-                    (b.rank || 999999)
+                    Number(
+                        b.sold_count || 0
+                    ) -
+                    Number(
+                        a.sold_count || 0
+                    )
             )[0];
 
 
-    if (elements.topProduct) {
+    elements.topProduct.textContent =
+        top
+            ? truncate(
+                top.name,
+                22
+            )
+            : "—";
 
-        elements.topProduct.textContent =
-            top
-                ? truncate(
-                    top.name,
-                    22
-                )
-                : "—";
+
+    elements.totalCategories.textContent =
+        formatNumber(
+            state.categories.size
+        );
+
+
+    elements.lastUpdate.textContent =
+        data.updated_at
+            ? formatDate(
+                data.updated_at
+            )
+            : "—";
+}
+
+
+// ============================================================
+// ANALYTICS
+// ============================================================
+
+function renderAnalytics() {
+
+    if (!state.stats) {
+
+        renderAnalyticsFallback();
+
+        return;
     }
 
 
-    if (elements.totalCategories) {
+    renderTodayGrowth();
 
-        elements.totalCategories.textContent =
-            formatNumber(
-                state.categories.size
+    renderDecline();
+
+    renderFreshBest();
+
+    renderCategoryRanking();
+}
+
+
+// ============================================================
+// TODAY GROWTH
+// ============================================================
+
+function renderTodayGrowth() {
+
+    const products =
+        getProductStats();
+
+
+    const growth =
+        products
+            .filter(
+                item =>
+                    item.rank_change > 0
+            )
+            .sort(
+                (a, b) =>
+                    b.rank_change -
+                    a.rank_change
             );
+
+
+    if (!growth.length) {
+
+        elements.todayGrowthTitle.textContent =
+            "بدون تغییر";
+
+        elements.todayGrowthValue.textContent =
+            "—";
+
+        elements.todayGrowthList.innerHTML =
+            emptyMiniList(
+                "هنوز رشد رتبه‌ای ثبت نشده"
+            );
+
+        return;
     }
 
 
-    if (elements.lastUpdate) {
+    const top =
+        growth[0];
 
-        elements.lastUpdate.textContent =
-            data.updated_at
-                ? formatDate(
-                    data.updated_at
-                )
-                : "—";
+
+    elements.todayGrowthTitle.textContent =
+        truncate(
+            top.name,
+            20
+        );
+
+
+    elements.todayGrowthValue.textContent =
+        `↑ ${formatNumber(
+            top.rank_change
+        )}`;
+
+
+    elements.todayGrowthList.innerHTML =
+        growth
+            .slice(0, 4)
+            .map(
+                item =>
+                    miniProduct(
+                        item,
+                        "up"
+                    )
+            )
+            .join("");
+}
+
+
+// ============================================================
+// DECLINE
+// ============================================================
+
+function renderDecline() {
+
+    const products =
+        getProductStats();
+
+
+    const decline =
+        products
+            .filter(
+                item =>
+                    item.rank_change < 0
+            )
+            .sort(
+                (a, b) =>
+                    a.rank_change -
+                    b.rank_change
+            );
+
+
+    if (!decline.length) {
+
+        elements.declineTitle.textContent =
+            "بدون افت";
+
+        elements.declineValue.textContent =
+            "—";
+
+        elements.declineList.innerHTML =
+            emptyMiniList(
+                "هنوز افت رتبه‌ای ثبت نشده"
+            );
+
+        return;
     }
+
+
+    const top =
+        decline[0];
+
+
+    elements.declineTitle.textContent =
+        truncate(
+            top.name,
+            20
+        );
+
+
+    elements.declineValue.textContent =
+        `↓ ${formatNumber(
+            Math.abs(
+                top.rank_change
+            )
+        )}`;
+
+
+    elements.declineList.innerHTML =
+        decline
+            .slice(0, 4)
+            .map(
+                item =>
+                    miniProduct(
+                        item,
+                        "down"
+                    )
+            )
+            .join("");
+}
+
+
+// ============================================================
+// FRESH BEST SELLERS
+// ============================================================
+
+function renderFreshBest() {
+
+    const fresh =
+        [...state.products]
+            .filter(
+                product =>
+                    isNewProduct(
+                        product
+                    )
+            )
+            .sort(
+                (a, b) =>
+                    Number(
+                        b.sold_count || 0
+                    ) -
+                    Number(
+                        a.sold_count || 0
+                    )
+            )
+            .slice(0, 5);
+
+
+    if (!fresh.length) {
+
+        elements.freshBestList.innerHTML =
+            emptyMiniList(
+                "محصول جدیدی پیدا نشد"
+            );
+
+        return;
+    }
+
+
+    elements.freshBestList.innerHTML =
+        fresh
+            .map(
+                product =>
+                    `
+                    <div class="mini-item">
+
+                        <span class="mini-name">
+                            ${escapeHTML(
+                                product.name ||
+                                "بدون نام"
+                            )}
+                        </span>
+
+                        <span class="mini-value">
+                            🔥 ${formatNumber(
+                                product.sold_count
+                            )}
+                        </span>
+
+                    </div>
+                    `
+            )
+            .join("");
+}
+
+
+// ============================================================
+// CATEGORY RANKING
+// ============================================================
+
+function renderCategoryRanking() {
+
+    const categoryStats =
+        new Map();
+
+
+    for (const product of state.products) {
+
+        const sold =
+            Number(
+                product.sold_count || 0
+            );
+
+
+        const categories =
+            Array.isArray(
+                product.categories
+            )
+                ? product.categories
+                : [];
+
+
+        for (const category of categories) {
+
+            const id =
+                String(
+                    category.id
+                );
+
+
+            const current =
+                categoryStats.get(
+                    id
+                ) || {
+
+                    id,
+
+                    name:
+                        category.name ||
+                        "بدون نام",
+
+                    products: 0,
+
+                    sales: 0
+                };
+
+
+            current.products += 1;
+
+            current.sales += sold;
+
+
+            categoryStats.set(
+                id,
+                current
+            );
+        }
+    }
+
+
+    const ranking =
+        [...categoryStats.values()]
+            .sort(
+                (a, b) =>
+                    b.sales -
+                    a.sales
+            )
+            .slice(0, 5);
+
+
+    if (!ranking.length) {
+
+        elements.categoryRanking.innerHTML =
+            emptyMiniList(
+                "دسته‌ای وجود ندارد"
+            );
+
+        return;
+    }
+
+
+    elements.categoryRanking.innerHTML =
+        ranking
+            .map(
+                (category, index) =>
+                    `
+                    <div class="mini-item">
+
+                        <span class="mini-name">
+                            #${formatNumber(
+                                index + 1
+                            )}
+                            ${escapeHTML(
+                                category.name
+                            )}
+                        </span>
+
+                        <span class="mini-value">
+                            🔥 ${formatNumber(
+                                category.sales
+                            )}
+                        </span>
+
+                    </div>
+                    `
+            )
+            .join("");
+}
+
+
+// ============================================================
+// FALLBACK
+// ============================================================
+
+function renderAnalyticsFallback() {
+
+    elements.todayGrowthList.innerHTML =
+        emptyMiniList(
+            "stats.json در دسترس نیست"
+        );
+
+
+    elements.declineList.innerHTML =
+        emptyMiniList(
+            "stats.json در دسترس نیست"
+        );
+
+
+    renderFreshBest();
+
+    renderCategoryRanking();
+}
+
+
+// ============================================================
+// PRODUCT STATS
+// ============================================================
+
+function getProductStats() {
+
+    if (!state.stats) {
+        return [];
+    }
+
+
+    const history =
+        state.stats.products || {};
+
+
+    return state.products
+        .map(product => {
+
+            const item =
+                history[
+                    String(
+                        product.id
+                    )
+                ] || {};
+
+
+            return {
+
+                ...product,
+
+                previous_rank:
+                    item.previous_rank ??
+                    null,
+
+                rank_change:
+                    Number(
+                        item.rank_change || 0
+                    ),
+
+                sold_change:
+                    Number(
+                        item.sold_change || 0
+                    )
+            };
+        });
+}
+
+
+// ============================================================
+// NEW PRODUCT
+// ============================================================
+
+function isNewProduct(product) {
+
+    if (!product.created_at) {
+        return false;
+    }
+
+
+    const created =
+        dateValue(
+            product.created_at
+        );
+
+
+    const now =
+        Date.now();
+
+
+    const days =
+        (
+            now -
+            created
+        ) /
+        (
+            1000 *
+            60 *
+            60 *
+            24
+        );
+
+
+    return days <= 14;
 }
 
 
@@ -253,98 +796,115 @@ function applyFilters() {
     const search =
         state.search
             .trim()
-            .toLocaleLowerCase("fa");
+            .toLocaleLowerCase(
+                "fa"
+            );
 
 
     let products =
-        state.products.filter(
-            product => {
+        getProductStats()
+            .filter(
+                product => {
 
-                // Search
-                if (search) {
+                    if (search) {
 
-                    const name =
-                        String(
-                            product.name || ""
-                        ).toLocaleLowerCase("fa");
+                        const name =
+                            String(
+                                product.name ||
+                                ""
+                            )
+                            .toLocaleLowerCase(
+                                "fa"
+                            );
+
+
+                        if (
+                            !name.includes(
+                                search
+                            )
+                        ) {
+                            return false;
+                        }
+                    }
+
 
                     if (
-                        !name.includes(search)
+                        state.category !==
+                        "all"
                     ) {
-                        return false;
+
+                        const categories =
+                            Array.isArray(
+                                product.categories
+                            )
+                                ? product.categories
+                                : [];
+
+
+                        const found =
+                            categories.some(
+                                category =>
+                                    String(
+                                        category.id
+                                    ) ===
+                                    state.category
+                            );
+
+
+                        if (!found) {
+                            return false;
+                        }
                     }
+
+
+                    return true;
                 }
+            );
 
 
-                // Category
-                if (
-                    state.category !==
-                    "all"
-                ) {
-
-                    const categories =
-                        Array.isArray(
-                            product.categories
-                        )
-                            ? product.categories
-                            : [];
-
-                    const found =
-                        categories.some(
-                            category =>
-                                String(
-                                    category.id
-                                ) ===
-                                state.category
-                        );
-
-                    if (!found) {
-                        return false;
-                    }
-                }
+    applyView(
+        products
+    );
 
 
-                return true;
-            }
-        );
+    sortProducts(
+        products
+    );
 
 
-    sortProducts(products);
+    state.filteredProducts =
+        products;
 
-    state.filteredProducts = products;
 
     state.page = 1;
+
 
     render();
 }
 
 
 // ============================================================
-// SORT
+// VIEWS
 // ============================================================
 
-function sortProducts(products) {
+function applyView(products) {
 
-    switch (state.sort) {
-
-        // ----------------------------------------------------
-        // پرفروش‌ترین‌ها
-        // ----------------------------------------------------
+    switch (state.view) {
 
         case "best":
 
             products.sort(
                 (a, b) =>
-                    (a.rank || 999999) -
-                    (b.rank || 999999)
+                    Number(
+                        b.sold_count || 0
+                    ) -
+                    Number(
+                        a.sold_count || 0
+                    )
             );
 
             break;
 
-
-        // ----------------------------------------------------
-        // جدیدترین‌ها
-        // ----------------------------------------------------
 
         case "newest":
 
@@ -361,91 +921,108 @@ function sortProducts(products) {
             break;
 
 
-        // ----------------------------------------------------
-        // قدیمی‌ترین‌ها
-        // ----------------------------------------------------
+        case "growth":
 
-        case "oldest":
+        case "today-growth":
+
+            products.sort(
+                (a, b) =>
+                    b.rank_change -
+                    a.rank_change
+            );
+
+            break;
+
+
+        case "decline":
+
+            products.sort(
+                (a, b) =>
+                    a.rank_change -
+                    b.rank_change
+            );
+
+            break;
+
+
+        case "all":
+
+        default:
+
+            break;
+    }
+}
+
+
+// ============================================================
+// SORT
+// ============================================================
+
+function sortProducts(products) {
+
+    if (
+        state.view !==
+        "all"
+    ) {
+        return;
+    }
+
+
+    switch (state.sort) {
+
+        case "newest":
 
             products.sort(
                 (a, b) =>
                     dateValue(
-                        a.created_at
+                        b.created_at
                     ) -
                     dateValue(
-                        b.created_at
+                        a.created_at
                     )
             );
 
             break;
 
 
-        // ----------------------------------------------------
-        // بیشترین فروش
-        // ----------------------------------------------------
-
-        case "sold":
-
-            products.sort(
-                (a, b) =>
-                    (b.sold_count || 0) -
-                    (a.sold_count || 0)
-            );
-
-            break;
-
-
-        // ----------------------------------------------------
-        // نام
-        // ----------------------------------------------------
-
-        case "name":
-
-            products.sort(
-                (a, b) =>
-                    String(a.name || "")
-                        .localeCompare(
-                            String(b.name || ""),
-                            "fa"
-                        )
-            );
-
-            break;
-
-
-        // ----------------------------------------------------
-        // رشد
-        // ----------------------------------------------------
-
         case "growth":
 
             products.sort(
                 (a, b) =>
-                    getRankChange(b.id) -
-                    getRankChange(a.id)
+                    b.rank_change -
+                    a.rank_change
             );
 
             break;
 
-
-        // ----------------------------------------------------
-        // افت
-        // ----------------------------------------------------
 
         case "decline":
 
             products.sort(
                 (a, b) =>
-                    getRankChange(a.id) -
-                    getRankChange(b.id)
+                    a.rank_change -
+                    b.rank_change
             );
 
             break;
 
 
-        // ----------------------------------------------------
-        // رتبه فعلی
-        // ----------------------------------------------------
+        case "name":
+
+            products.sort(
+                (a, b) =>
+                    String(
+                        a.name || ""
+                    ).localeCompare(
+                        String(
+                            b.name || ""
+                        ),
+                        "fa"
+                    )
+            );
+
+            break;
+
 
         case "rank":
 
@@ -453,8 +1030,14 @@ function sortProducts(products) {
 
             products.sort(
                 (a, b) =>
-                    (a.rank || 999999) -
-                    (b.rank || 999999)
+                    (
+                        a.rank ||
+                        999999
+                    ) -
+                    (
+                        b.rank ||
+                        999999
+                    )
             );
 
             break;
@@ -472,22 +1055,26 @@ function render() {
         state.filteredProducts.length;
 
 
-    if (elements.resultsCount) {
-
-        elements.resultsCount.textContent =
-            formatNumber(total);
-    }
+    elements.resultsCount.textContent =
+        formatNumber(
+            total
+        );
 
 
     if (!total) {
 
-        elements.productsGrid.innerHTML = "";
+        elements.productsGrid.innerHTML =
+            "";
+
 
         elements.emptyState.classList.remove(
             "hidden"
         );
 
-        elements.pagination.innerHTML = "";
+
+        elements.pagination.innerHTML =
+            "";
+
 
         return;
     }
@@ -499,7 +1086,10 @@ function render() {
 
 
     const start =
-        (state.page - 1) *
+        (
+            state.page -
+            1
+        ) *
         state.perPage;
 
 
@@ -547,7 +1137,9 @@ function renderProducts(products) {
 function createProductCard(product) {
 
     const categories =
-        Array.isArray(product.categories)
+        Array.isArray(
+            product.categories
+        )
             ? product.categories
             : [];
 
@@ -557,11 +1149,13 @@ function createProductCard(product) {
             .slice(0, 2)
             .map(
                 category =>
-                    `<span class="tag">
+                    `
+                    <span class="tag">
                         ${escapeHTML(
                             category.name
                         )}
-                    </span>`
+                    </span>
+                    `
             )
             .join("");
 
@@ -574,40 +1168,60 @@ function createProductCard(product) {
 
     const rank =
         product.rank
-            ? `#${formatNumber(product.rank)}`
+            ? `#${formatNumber(
+                product.rank
+            )}`
             : "—";
-
-
-    const rankChange =
-        getRankChange(product.id);
-
-
-    let movementHTML = "";
-
-    if (rankChange > 0) {
-
-        movementHTML = `
-            <span class="rank-up">
-                ↑ ${formatNumber(rankChange)}
-            </span>
-        `;
-
-    } else if (rankChange < 0) {
-
-        movementHTML = `
-            <span class="rank-down">
-                ↓ ${formatNumber(
-                    Math.abs(rankChange)
-                )}
-            </span>
-        `;
-    }
 
 
     const url =
         product.url
             ? `https://geektori.ir${product.url}`
             : "https://geektori.ir";
+
+
+    const change =
+        Number(
+            product.rank_change || 0
+        );
+
+
+    let changeHTML =
+        `
+        <div class="rank-change same">
+            — بدون تغییر
+        </div>
+        `;
+
+
+    if (change > 0) {
+
+        changeHTML =
+            `
+            <div class="rank-change up">
+                ↑ ${formatNumber(
+                    change
+                )}
+                رتبه
+            </div>
+            `;
+    }
+
+
+    if (change < 0) {
+
+        changeHTML =
+            `
+            <div class="rank-change down">
+                ↓ ${formatNumber(
+                    Math.abs(
+                        change
+                    )
+                )}
+                رتبه
+            </div>
+            `;
+    }
 
 
     return `
@@ -620,7 +1234,9 @@ function createProductCard(product) {
                 </span>
 
                 <span class="sold">
-                    🔥 ${formatNumber(sold)}
+                    🔥 ${formatNumber(
+                        sold
+                    )}
                 </span>
 
             </div>
@@ -637,6 +1253,9 @@ function createProductCard(product) {
             <div class="tags">
                 ${categoryHTML}
             </div>
+
+
+            ${changeHTML}
 
 
             <div class="product-meta">
@@ -658,476 +1277,23 @@ function createProductCard(product) {
             </div>
 
 
-            <div class="product-movement">
-
-                ${movementHTML}
-
-            </div>
-
-
             <a
                 class="product-link"
-                href="${escapeAttribute(url)}"
+                href="${escapeAttribute(
+                    url
+                )}"
                 target="_blank"
                 rel="noopener noreferrer"
             >
                 مشاهده محصول
-                <span>↗</span>
+
+                <span>
+                    ↗
+                </span>
+
             </a>
 
         </article>
-    `;
-}
-
-
-// ============================================================
-// ADVANCED SECTIONS
-// ============================================================
-
-function renderAdvancedSections() {
-
-    /*
-     * این تابع اطلاعات پیشرفته را آماده می‌کند.
-     *
-     * اگر HTML این بخش‌ها را هنوز اضافه نکرده باشی،
-     * هیچ خطایی ایجاد نمی‌شود.
-     */
-
-    renderCategoryRanking();
-    renderTopMovers();
-    renderFreshBestSellers();
-    renderProductStatus();
-}
-
-
-// ============================================================
-// CATEGORY RANKING
-// ============================================================
-
-function renderCategoryRanking() {
-
-    const container =
-        document.getElementById(
-            "categoryRanking"
-        );
-
-    if (!container) {
-        return;
-    }
-
-    const stats = new Map();
-
-    for (const product of state.products) {
-
-        const categories =
-            Array.isArray(product.categories)
-                ? product.categories
-                : [];
-
-        for (const category of categories) {
-
-            const id =
-                String(category.id);
-
-            if (!stats.has(id)) {
-
-                stats.set(
-                    id,
-                    {
-                        id,
-                        name:
-                            category.name ||
-                            "بدون نام",
-                        count: 0,
-                        sold: 0
-                    }
-                );
-            }
-
-            const item =
-                stats.get(id);
-
-            item.count++;
-
-            item.sold +=
-                Number(
-                    product.sold_count || 0
-                );
-        }
-    }
-
-
-    const ranking =
-        [...stats.values()]
-            .sort(
-                (a, b) =>
-                    b.count - a.count
-            )
-            .slice(0, 20);
-
-
-    container.innerHTML =
-        ranking
-            .map(
-                (item, index) => `
-                    <div class="category-ranking-item">
-
-                        <span>
-                            #${formatNumber(
-                                index + 1
-                            )}
-                        </span>
-
-                        <strong>
-                            ${escapeHTML(
-                                item.name
-                            )}
-                        </strong>
-
-                        <small>
-                            ${formatNumber(
-                                item.count
-                            )}
- محصول
-                        </small>
-
-                    </div>
-                `
-            )
-            .join("");
-}
-
-
-// ============================================================
-// MOVERS
-// ============================================================
-
-function getProductStats(id) {
-
-    if (
-        !state.stats ||
-        !state.stats.products
-    ) {
-        return null;
-    }
-
-    return (
-        state.stats.products[
-            String(id)
-        ] || null
-    );
-}
-
-
-function getRankChange(id) {
-
-    const stats =
-        getProductStats(id);
-
-    return Number(
-        stats?.rank_change || 0
-    );
-}
-
-
-function renderTopMovers() {
-
-    const growthContainer =
-        document.getElementById(
-            "topGrowth"
-        );
-
-    const declineContainer =
-        document.getElementById(
-            "topDecline"
-        );
-
-
-    if (
-        !growthContainer &&
-        !declineContainer
-    ) {
-        return;
-    }
-
-
-    const productsById =
-        new Map(
-            state.products.map(
-                product => [
-                    String(product.id),
-                    product
-                ]
-            )
-        );
-
-
-    const movers =
-        state.products
-            .map(product => {
-
-                const change =
-                    getRankChange(
-                        product.id
-                    );
-
-                return {
-                    product,
-                    change
-                };
-            });
-
-
-    const growth =
-        movers
-            .filter(
-                item =>
-                    item.change > 0
-            )
-            .sort(
-                (a, b) =>
-                    b.change - a.change
-            )
-            .slice(0, 10);
-
-
-    const decline =
-        movers
-            .filter(
-                item =>
-                    item.change < 0
-            )
-            .sort(
-                (a, b) =>
-                    a.change - b.change
-            )
-            .slice(0, 10);
-
-
-    if (growthContainer) {
-
-        growthContainer.innerHTML =
-            growth.length
-                ? growth
-                    .map(
-                        item =>
-                            createMoverHTML(
-                                item.product,
-                                item.change,
-                                true
-                            )
-                    )
-                    .join("")
-                : "<p>هنوز تاریخچه کافی وجود ندارد.</p>";
-    }
-
-
-    if (declineContainer) {
-
-        declineContainer.innerHTML =
-            decline.length
-                ? decline
-                    .map(
-                        item =>
-                            createMoverHTML(
-                                item.product,
-                                item.change,
-                                false
-                            )
-                    )
-                    .join("")
-                : "<p>هنوز تاریخچه کافی وجود ندارد.</p>";
-    }
-}
-
-
-function createMoverHTML(
-    product,
-    change,
-    positive
-) {
-
-    return `
-        <div class="mover-item">
-
-            <strong>
-                ${escapeHTML(
-                    truncate(
-                        product.name,
-                        35
-                    )
-                )}
-            </strong>
-
-            <span>
-                ${positive ? "↑" : "↓"}
-                ${formatNumber(
-                    Math.abs(change)
-                )}
-            </span>
-
-        </div>
-    `;
-}
-
-
-// ============================================================
-// FRESH BEST SELLERS
-// ============================================================
-
-function renderFreshBestSellers() {
-
-    const container =
-        document.getElementById(
-            "freshBestSellers"
-        );
-
-    if (!container) {
-        return;
-    }
-
-
-    const products =
-        [...state.products]
-            .sort(
-                (a, b) =>
-                    dateValue(
-                        b.created_at
-                    ) -
-                    dateValue(
-                        a.created_at
-                    )
-            )
-            .filter(
-                product =>
-                    Number(
-                        product.sold_count || 0
-                    ) > 0
-            )
-            .sort(
-                (a, b) =>
-                    Number(
-                        b.sold_count || 0
-                    ) -
-                    Number(
-                        a.sold_count || 0
-                    )
-            )
-            .slice(0, 10);
-
-
-    container.innerHTML =
-        products.length
-            ? products
-                .map(
-                    product =>
-                        `
-                        <div class="fresh-best-item">
-
-                            <strong>
-                                ${escapeHTML(
-                                    truncate(
-                                        product.name,
-                                        35
-                                    )
-                                )}
-                            </strong>
-
-                            <span>
-                                🔥
-                                ${formatNumber(
-                                    product.sold_count
-                                )}
-                            </span>
-
-                        </div>
-                        `
-                )
-                .join("")
-            : "<p>محصولی پیدا نشد.</p>";
-}
-
-
-// ============================================================
-// PRODUCT STATUS
-// ============================================================
-
-function renderProductStatus() {
-
-    const container =
-        document.getElementById(
-            "productStatus"
-        );
-
-    if (!container) {
-        return;
-    }
-
-
-    const total =
-        state.products.length;
-
-
-    const soldProducts =
-        state.products.filter(
-            product =>
-                Number(
-                    product.sold_count || 0
-                ) > 0
-        ).length;
-
-
-    const zeroSales =
-        total -
-        soldProducts;
-
-
-    const newProducts =
-        state.products.filter(
-            product =>
-                isRecent(
-                    product.created_at,
-                    30
-                )
-        ).length;
-
-
-    container.innerHTML = `
-        <div class="status-item">
-            <strong>
-                ${formatNumber(total)}
-            </strong>
-            <span>
-                کل محصولات
-            </span>
-        </div>
-
-        <div class="status-item">
-            <strong>
-                ${formatNumber(soldProducts)}
-            </strong>
-            <span>
-                دارای فروش
-            </span>
-        </div>
-
-        <div class="status-item">
-            <strong>
-                ${formatNumber(zeroSales)}
-            </strong>
-            <span>
-                بدون فروش
-            </span>
-        </div>
-
-        <div class="status-item">
-            <strong>
-                ${formatNumber(newProducts)}
-            </strong>
-            <span>
-                محصولات ۳۰ روز اخیر
-            </span>
-        </div>
     `;
 }
 
@@ -1145,9 +1311,12 @@ function renderPagination(total) {
         );
 
 
-    if (totalPages <= 1) {
+    if (
+        totalPages <= 1
+    ) {
 
-        elements.pagination.innerHTML = "";
+        elements.pagination.innerHTML =
+            "";
 
         return;
     }
@@ -1163,8 +1332,14 @@ function renderPagination(total) {
         `
         <button
             class="page-button"
-            ${current === 1 ? "disabled" : ""}
-            onclick="changePage(${current - 1})"
+            ${
+                current === 1
+                    ? "disabled"
+                    : ""
+            }
+            onclick="changePage(
+                ${current - 1}
+            )"
         >
             قبلی
         </button>
@@ -1186,13 +1361,19 @@ function renderPagination(total) {
         );
 
 
-    if (start > 1) {
+    if (
+        start > 1
+    ) {
 
         pages.push(
             pageButton(1)
         );
 
-        if (start > 2) {
+
+        if (
+            start > 2
+        ) {
+
             pages.push(
                 `<span class="dots">…</span>`
             );
@@ -1207,21 +1388,32 @@ function renderPagination(total) {
     ) {
 
         pages.push(
-            pageButton(page)
+            pageButton(
+                page
+            )
         );
     }
 
 
-    if (end < totalPages) {
+    if (
+        end < totalPages
+    ) {
 
-        if (end < totalPages - 1) {
+        if (
+            end <
+            totalPages - 1
+        ) {
+
             pages.push(
                 `<span class="dots">…</span>`
             );
         }
 
+
         pages.push(
-            pageButton(totalPages)
+            pageButton(
+                totalPages
+            )
         );
     }
 
@@ -1235,7 +1427,9 @@ function renderPagination(total) {
                     ? "disabled"
                     : ""
             }
-            onclick="changePage(${current + 1})"
+            onclick="changePage(
+                ${current + 1}
+            )"
         >
             بعدی
         </button>
@@ -1257,9 +1451,13 @@ function pageButton(page) {
                     ? "active"
                     : ""
             }"
-            onclick="changePage(${page})"
+            onclick="changePage(
+                ${page}
+            )"
         >
-            ${formatNumber(page)}
+            ${formatNumber(
+                page
+            )}
         </button>
     `;
 }
@@ -1282,14 +1480,72 @@ function changePage(page) {
     }
 
 
-    state.page = page;
+    state.page =
+        page;
+
 
     render();
 
+
     window.scrollTo({
+
         top: 0,
+
         behavior: "smooth"
     });
+}
+
+
+// ============================================================
+// MINI UI
+// ============================================================
+
+function miniProduct(
+    item,
+    type
+) {
+
+    const symbol =
+        type === "up"
+            ? "↑"
+            : "↓";
+
+
+    return `
+        <div class="mini-item">
+
+            <span class="mini-name">
+                ${escapeHTML(
+                    item.name ||
+                    "بدون نام"
+                )}
+            </span>
+
+            <span class="mini-value">
+                ${symbol}
+                ${formatNumber(
+                    Math.abs(
+                        item.rank_change
+                    )
+                )}
+            </span>
+
+        </div>
+    `;
+}
+
+
+function emptyMiniList(
+    text
+) {
+
+    return `
+        <div class="mini-empty">
+            ${escapeHTML(
+                text
+            )}
+        </div>
+    `;
 }
 
 
@@ -1304,10 +1560,12 @@ elements.searchInput.addEventListener(
         state.search =
             event.target.value;
 
+
         elements.clearSearch.style.display =
             state.search
                 ? "block"
                 : "none";
+
 
         applyFilters();
     }
@@ -1318,14 +1576,20 @@ elements.clearSearch.addEventListener(
     "click",
     () => {
 
-        elements.searchInput.value = "";
+        elements.searchInput.value =
+            "";
 
-        state.search = "";
+
+        state.search =
+            "";
+
 
         elements.clearSearch.style.display =
             "none";
 
+
         applyFilters();
+
 
         elements.searchInput.focus();
     }
@@ -1339,6 +1603,7 @@ elements.categoryFilter.addEventListener(
         state.category =
             event.target.value;
 
+
         applyFilters();
     }
 );
@@ -1351,122 +1616,216 @@ elements.sortSelect.addEventListener(
         state.sort =
             event.target.value;
 
+
+        state.view =
+            "all";
+
+
+        updateActiveTab(
+            "all"
+        );
+
+
         applyFilters();
     }
 );
 
 
 // ============================================================
-// HELPERS
+// ANALYTICS TABS
 // ============================================================
 
-function formatNumber(value) {
+document
+    .querySelectorAll(
+        ".analytics-tab"
+    )
+    .forEach(
+        button => {
 
-    return Number(
-        value || 0
-    ).toLocaleString("fa-IR");
+            button.addEventListener(
+                "click",
+                () => {
+
+                    state.view =
+                        button.dataset.view;
+
+
+                    updateActiveTab(
+                        state.view
+                    );
+
+
+                    applyFilters();
+                }
+            );
+        }
+    );
+
+
+function updateActiveTab(
+    view
+) {
+
+    document
+        .querySelectorAll(
+            ".analytics-tab"
+        )
+        .forEach(
+            button => {
+
+                button.classList.toggle(
+                    "active",
+                    button.dataset.view ===
+                    view
+                );
+            }
+        );
 }
 
 
-function formatDate(value) {
+// ============================================================
+// HELPERS
+// ============================================================
+
+function formatNumber(
+    value
+) {
+
+    return Number(
+        value || 0
+    ).toLocaleString(
+        "fa-IR"
+    );
+}
+
+
+function formatDate(
+    value
+) {
 
     if (!value) {
         return "—";
     }
 
+
     const date =
-        new Date(value);
+        new Date(
+            value
+        );
+
 
     if (
         Number.isNaN(
             date.getTime()
         )
     ) {
+
         return "—";
     }
+
 
     return date.toLocaleDateString(
         "fa-IR",
         {
             year: "numeric",
+
             month: "2-digit",
+
             day: "2-digit"
         }
     );
 }
 
 
-function dateValue(value) {
+function dateValue(
+    value
+) {
 
     const date =
-        new Date(value || 0);
+        new Date(
+            value || 0
+        );
 
-    return date.getTime() || 0;
+
+    return (
+        date.getTime() ||
+        0
+    );
 }
 
 
-function truncate(text, length) {
+function truncate(
+    text,
+    length
+) {
 
     text =
         String(
             text || ""
         );
 
+
     if (
         text.length <= length
     ) {
+
         return text;
     }
 
+
     return (
-        text.slice(0, length) +
+        text.slice(
+            0,
+            length
+        ) +
         "…"
     );
 }
 
 
-function escapeHTML(value) {
+function escapeHTML(
+    value
+) {
 
-    return String(value ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+    return String(
+        value ?? ""
+    )
+        .replaceAll(
+            "&",
+            "&amp;"
+        )
+        .replaceAll(
+            "<",
+            "&lt;"
+        )
+        .replaceAll(
+            ">",
+            "&gt;"
+        )
+        .replaceAll(
+            '"',
+            "&quot;"
+        )
+        .replaceAll(
+            "'",
+            "&#039;"
+        );
 }
 
 
-function escapeAttribute(value) {
+function escapeAttribute(
+    value
+) {
 
-    return escapeHTML(value);
-}
-
-
-function isRecent(value, days) {
-
-    const time =
-        dateValue(value);
-
-    if (!time) {
-        return false;
-    }
-
-    const diff =
-        Date.now() - time;
-
-    return (
-        diff >= 0 &&
-        diff <=
-        days *
-        24 *
-        60 *
-        60 *
-        1000
+    return escapeHTML(
+        value
     );
 }
 
 
-function setLoading(isLoading) {
+function setLoading(
+    isLoading
+) {
 
     elements.loadingText.textContent =
         isLoading
@@ -1480,4 +1839,3 @@ function setLoading(isLoading) {
 // ============================================================
 
 loadData();
-```

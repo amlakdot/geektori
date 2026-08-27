@@ -3,9 +3,11 @@
 const DATA_URL = "./data/current.json";
 const STATS_URL = "./data/stats.json";
 
+
 const state = {
 
     products: [],
+
     filteredProducts: [],
 
     stats: null,
@@ -13,6 +15,7 @@ const state = {
     categories: new Map(),
 
     search: "",
+
     category: "all",
 
     sort: "rank",
@@ -20,6 +23,7 @@ const state = {
     view: "all",
 
     page: 1,
+
     perPage: 48
 };
 
@@ -500,7 +504,7 @@ function renderDecline() {
 
 
 // ============================================================
-// FRESH BEST SELLERS
+// FRESH BEST
 // ============================================================
 
 function renderFreshBest() {
@@ -656,12 +660,15 @@ function renderCategoryRanking() {
                     <div class="mini-item">
 
                         <span class="mini-name">
+
                             #${formatNumber(
                                 index + 1
                             )}
+
                             ${escapeHTML(
                                 category.name
                             )}
+
                         </span>
 
                         <span class="mini-value">
@@ -923,6 +930,15 @@ function applyView(products) {
 
         case "growth":
 
+            products.sort(
+                (a, b) =>
+                    b.rank_change -
+                    a.rank_change
+            );
+
+            break;
+
+
         case "today-growth":
 
             products.sort(
@@ -1074,7 +1090,6 @@ function render() {
 
         elements.pagination.innerHTML =
             "";
-
 
         return;
     }
@@ -1332,14 +1347,8 @@ function renderPagination(total) {
         `
         <button
             class="page-button"
-            ${
-                current === 1
-                    ? "disabled"
-                    : ""
-            }
-            onclick="changePage(
-                ${current - 1}
-            )"
+            ${current === 1 ? "disabled" : ""}
+            onclick="changePage(${current - 1})"
         >
             قبلی
         </button>
@@ -1361,18 +1370,14 @@ function renderPagination(total) {
         );
 
 
-    if (
-        start > 1
-    ) {
+    if (start > 1) {
 
         pages.push(
             pageButton(1)
         );
 
 
-        if (
-            start > 2
-        ) {
+        if (start > 2) {
 
             pages.push(
                 `<span class="dots">…</span>`
@@ -1427,9 +1432,7 @@ function renderPagination(total) {
                     ? "disabled"
                     : ""
             }
-            onclick="changePage(
-                ${current + 1}
-            )"
+            onclick="changePage(${current + 1})"
         >
             بعدی
         </button>
@@ -1451,9 +1454,7 @@ function pageButton(page) {
                     ? "active"
                     : ""
             }"
-            onclick="changePage(
-                ${page}
-            )"
+            onclick="changePage(${page})"
         >
             ${formatNumber(
                 page
@@ -1522,12 +1523,15 @@ function miniProduct(
             </span>
 
             <span class="mini-value">
+
                 ${symbol}
+
                 ${formatNumber(
                     Math.abs(
                         item.rank_change
                     )
                 )}
+
             </span>
 
         </div>
@@ -1646,16 +1650,37 @@ document
                 "click",
                 () => {
 
-                    state.view =
+                    const view =
                         button.dataset.view;
 
 
+                    state.view =
+                        view;
+
+
+                    /*
+                     * وقتی یکی از تب‌های تحلیلی
+                     * انتخاب می‌شود، Sort دستی
+                     * دیگر نباید روی نتیجه اثر بگذارد.
+                     */
+
+                    if (
+                        view !==
+                        "all"
+                    ) {
+
+                        elements.sortSelect.value =
+                            "rank";
+                    }
+
+
                     updateActiveTab(
-                        state.view
+                        view
                     );
 
 
                     applyFilters();
+
                 }
             );
         }

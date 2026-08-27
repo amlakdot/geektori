@@ -49,13 +49,9 @@
     <section class="stats">
 
         <div class="stat-card">
-            <span class="stat-label">
-                کل محصولات
-            </span>
+            <span class="stat-label">کل محصولات</span>
 
-            <strong id="totalProducts">
-                —
-            </strong>
+            <strong id="totalProducts">—</strong>
 
             <span class="stat-description">
                 محصول ثبت‌شده
@@ -64,13 +60,9 @@
 
 
         <div class="stat-card">
-            <span class="stat-label">
-                پرفروش‌ترین
-            </span>
+            <span class="stat-label">پرفروش‌ترین</span>
 
-            <strong id="topProduct">
-                —
-            </strong>
+            <strong id="topProduct">—</strong>
 
             <span class="stat-description">
                 بر اساس تعداد فروش
@@ -79,13 +71,9 @@
 
 
         <div class="stat-card">
-            <span class="stat-label">
-                دسته‌ها
-            </span>
+            <span class="stat-label">دسته‌ها</span>
 
-            <strong id="totalCategories">
-                —
-            </strong>
+            <strong id="totalCategories">—</strong>
 
             <span class="stat-description">
                 دسته‌بندی فعال
@@ -94,13 +82,9 @@
 
 
         <div class="stat-card">
-            <span class="stat-label">
-                آخرین بروزرسانی
-            </span>
+            <span class="stat-label">آخرین بروزرسانی</span>
 
-            <strong id="lastUpdate">
-                —
-            </strong>
+            <strong id="lastUpdate">—</strong>
 
             <span class="stat-description">
                 زمان دریافت اطلاعات
@@ -111,14 +95,17 @@
 
 
     <!-- ======================================================
-         QUICK PANELS
+         ANALYTICS
     ======================================================= -->
 
     <section class="analytics-grid">
 
+        <!-- TODAY GROWTH -->
+
         <div class="analytics-card">
 
             <div class="analytics-card-header">
+
                 <div>
                     <span class="analytics-label">
                         بیشترین رشد امروز
@@ -135,6 +122,7 @@
                 >
                     —
                 </span>
+
             </div>
 
             <div
@@ -145,9 +133,12 @@
         </div>
 
 
+        <!-- DECLINE -->
+
         <div class="analytics-card">
 
             <div class="analytics-card-header">
+
                 <div>
                     <span class="analytics-label">
                         بیشترین افت
@@ -164,6 +155,7 @@
                 >
                     —
                 </span>
+
             </div>
 
             <div
@@ -174,9 +166,12 @@
         </div>
 
 
+        <!-- FRESH BEST -->
+
         <div class="analytics-card">
 
             <div class="analytics-card-header">
+
                 <div>
                     <span class="analytics-label">
                         تازه‌های پرفروش
@@ -190,6 +185,7 @@
                 <span class="analytics-icon">
                     🔥
                 </span>
+
             </div>
 
             <div
@@ -200,9 +196,12 @@
         </div>
 
 
+        <!-- CATEGORY -->
+
         <div class="analytics-card">
 
             <div class="analytics-card-header">
+
                 <div>
                     <span class="analytics-label">
                         رتبه‌بندی دسته‌ها
@@ -214,8 +213,9 @@
                 </div>
 
                 <span class="analytics-icon">
-                    # 
+                    #
                 </span>
+
             </div>
 
             <div
@@ -229,54 +229,75 @@
 
 
     <!-- ======================================================
-         NAVIGATION
+         ANALYTICS NAVIGATION
     ======================================================= -->
 
-    <nav class="analytics-nav">
+    <section class="analytics-navigation">
 
-        <button
-            class="analytics-tab active"
-            data-view="all"
-        >
-            همه محصولات
-        </button>
+        <div class="analytics-nav">
 
-        <button
-            class="analytics-tab"
-            data-view="best"
-        >
-            پرفروش‌ترین‌ها
-        </button>
+            <button
+                class="analytics-tab active"
+                data-view="all"
+                type="button"
+            >
+                <span class="tab-icon">◉</span>
+                <span>همه محصولات</span>
+            </button>
 
-        <button
-            class="analytics-tab"
-            data-view="newest"
-        >
-            جدیدترین‌ها
-        </button>
 
-        <button
-            class="analytics-tab"
-            data-view="growth"
-        >
-            بیشترین رشد
-        </button>
+            <button
+                class="analytics-tab"
+                data-view="best"
+                type="button"
+            >
+                <span class="tab-icon">🔥</span>
+                <span>پرفروش‌ترین‌ها</span>
+            </button>
 
-        <button
-            class="analytics-tab"
-            data-view="today-growth"
-        >
-            رشد امروز
-        </button>
 
-        <button
-            class="analytics-tab"
-            data-view="decline"
-        >
-            بیشترین افت
-        </button>
+            <button
+                class="analytics-tab"
+                data-view="newest"
+                type="button"
+            >
+                <span class="tab-icon">✦</span>
+                <span>جدیدترین‌ها</span>
+            </button>
 
-    </nav>
+
+            <button
+                class="analytics-tab"
+                data-view="growth"
+                type="button"
+            >
+                <span class="tab-icon">↗</span>
+                <span>بیشترین رشد</span>
+            </button>
+
+
+            <button
+                class="analytics-tab"
+                data-view="today-growth"
+                type="button"
+            >
+                <span class="tab-icon">↑</span>
+                <span>رشد امروز</span>
+            </button>
+
+
+            <button
+                class="analytics-tab"
+                data-view="decline"
+                type="button"
+            >
+                <span class="tab-icon">↓</span>
+                <span>بیشترین افت</span>
+            </button>
+
+        </div>
+
+    </section>
 
 
     <!-- ======================================================
@@ -301,6 +322,8 @@
             <button
                 id="clearSearch"
                 class="clear-search"
+                type="button"
+                aria-label="پاک کردن جستجو"
             >
                 ×
             </button>
@@ -351,10 +374,7 @@
     <div class="results-bar">
 
         <div>
-            <span id="resultsCount">
-                0
-            </span>
-
+            <span id="resultsCount">0</span>
             محصول نمایش داده می‌شود
         </div>
 

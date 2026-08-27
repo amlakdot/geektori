@@ -1,11 +1,14 @@
+```javascript
 "use strict";
 
 const DATA_URL = "./data/current.json";
+const STATS_URL = "./data/stats.json";
 
 const state = {
     products: [],
     filteredProducts: [],
     categories: new Map(),
+    stats: null,
 
     search: "",
     category: "all",
@@ -52,17 +55,30 @@ async function loadData() {
 
         setLoading(true);
 
-        const response = await fetch(
-            `${DATA_URL}?v=${Date.now()}`
-        );
+        const cacheBust = `?v=${Date.now()}`;
 
-        if (!response.ok) {
+        const [currentResponse, statsResponse] =
+            await Promise.all([
+                fetch(`${DATA_URL}${cacheBust}`),
+                fetch(`${STATS_URL}${cacheBust}`)
+            ]);
+
+        if (!currentResponse.ok) {
             throw new Error(
-                `HTTP ${response.status}`
+                `current.json HTTP ${currentResponse.status}`
             );
         }
 
-        const data = await response.json();
+        const data =
+            await currentResponse.json();
+
+        let stats = null;
+
+        if (statsResponse.ok) {
+            stats = await statsResponse.json();
+        }
+
+        state.stats = stats;
 
         state.products =
             Array.isArray(data.products)
@@ -77,6 +93,8 @@ async function loadData() {
 
         applyFilters();
 
+        renderAdvancedSections();
+
         setLoading(false);
 
     } catch (error) {
@@ -90,7 +108,6 @@ async function loadData() {
 
         elements.loadingText.textContent =
             "خطا در دریافت اطلاعات";
-
     }
 }
 
@@ -129,14 +146,18 @@ function buildCategories() {
 
 function renderCategoryFilter() {
 
+    if (!elements.categoryFilter) {
+        return;
+    }
+
     const categories = [
         ...state.categories.entries()
     ];
 
     categories.sort(
         (a, b) =>
-            a[1].localeCompare(
-                b[1],
+            String(a[1]).localeCompare(
+                String(b[1]),
                 "fa"
             )
     );
@@ -171,43 +192,55 @@ function renderCategoryFilter() {
 
 function renderStats(data) {
 
-    elements.totalProducts.textContent =
-        formatNumber(
-            data.total_products ??
-            state.products.length
-        );
+    if (elements.totalProducts) {
+
+        elements.totalProducts.textContent =
+            formatNumber(
+                data.total_products ??
+                state.products.length
+            );
+    }
 
 
     const top =
         [...state.products]
             .sort(
                 (a, b) =>
-                    (b.sold_count || 0) -
-                    (a.sold_count || 0)
+                    (a.rank || 999999) -
+                    (b.rank || 999999)
             )[0];
 
 
-    elements.topProduct.textContent =
-        top
-            ? truncate(
-                top.name,
-                22
-            )
-            : "—";
+    if (elements.topProduct) {
+
+        elements.topProduct.textContent =
+            top
+                ? truncate(
+                    top.name,
+                    22
+                )
+                : "—";
+    }
 
 
-    elements.totalCategories.textContent =
-        formatNumber(
-            state.categories.size
-        );
+    if (elements.totalCategories) {
+
+        elements.totalCategories.textContent =
+            formatNumber(
+                state.categories.size
+            );
+    }
 
 
-    elements.lastUpdate.textContent =
-        data.updated_at
-            ? formatDate(
-                data.updated_at
-            )
-            : "—";
+    if (elements.lastUpdate) {
+
+        elements.lastUpdate.textContent =
+            data.updated_at
+                ? formatDate(
+                    data.updated_at
+                )
+                : "—";
+    }
 }
 
 
@@ -294,6 +327,25 @@ function sortProducts(products) {
 
     switch (state.sort) {
 
+        // ----------------------------------------------------
+        // پرفروش‌ترین‌ها
+        // ----------------------------------------------------
+
+        case "best":
+
+            products.sort(
+                (a, b) =>
+                    (a.rank || 999999) -
+                    (b.rank || 999999)
+            );
+
+            break;
+
+
+        // ----------------------------------------------------
+        // جدیدترین‌ها
+        // ----------------------------------------------------
+
         case "newest":
 
             products.sort(
@@ -308,6 +360,10 @@ function sortProducts(products) {
 
             break;
 
+
+        // ----------------------------------------------------
+        // قدیمی‌ترین‌ها
+        // ----------------------------------------------------
 
         case "oldest":
 
@@ -324,6 +380,25 @@ function sortProducts(products) {
             break;
 
 
+        // ----------------------------------------------------
+        // بیشترین فروش
+        // ----------------------------------------------------
+
+        case "sold":
+
+            products.sort(
+                (a, b) =>
+                    (b.sold_count || 0) -
+                    (a.sold_count || 0)
+            );
+
+            break;
+
+
+        // ----------------------------------------------------
+        // نام
+        // ----------------------------------------------------
+
         case "name":
 
             products.sort(
@@ -337,6 +412,40 @@ function sortProducts(products) {
 
             break;
 
+
+        // ----------------------------------------------------
+        // رشد
+        // ----------------------------------------------------
+
+        case "growth":
+
+            products.sort(
+                (a, b) =>
+                    getRankChange(b.id) -
+                    getRankChange(a.id)
+            );
+
+            break;
+
+
+        // ----------------------------------------------------
+        // افت
+        // ----------------------------------------------------
+
+        case "decline":
+
+            products.sort(
+                (a, b) =>
+                    getRankChange(a.id) -
+                    getRankChange(b.id)
+            );
+
+            break;
+
+
+        // ----------------------------------------------------
+        // رتبه فعلی
+        // ----------------------------------------------------
 
         case "rank":
 
@@ -363,8 +472,11 @@ function render() {
         state.filteredProducts.length;
 
 
-    elements.resultsCount.textContent =
-        formatNumber(total);
+    if (elements.resultsCount) {
+
+        elements.resultsCount.textContent =
+            formatNumber(total);
+    }
 
 
     if (!total) {
@@ -466,6 +578,32 @@ function createProductCard(product) {
             : "—";
 
 
+    const rankChange =
+        getRankChange(product.id);
+
+
+    let movementHTML = "";
+
+    if (rankChange > 0) {
+
+        movementHTML = `
+            <span class="rank-up">
+                ↑ ${formatNumber(rankChange)}
+            </span>
+        `;
+
+    } else if (rankChange < 0) {
+
+        movementHTML = `
+            <span class="rank-down">
+                ↓ ${formatNumber(
+                    Math.abs(rankChange)
+                )}
+            </span>
+        `;
+    }
+
+
     const url =
         product.url
             ? `https://geektori.ir${product.url}`
@@ -520,6 +658,13 @@ function createProductCard(product) {
             </div>
 
 
+            <div class="product-movement">
+
+                ${movementHTML}
+
+            </div>
+
+
             <a
                 class="product-link"
                 href="${escapeAttribute(url)}"
@@ -531,6 +676,458 @@ function createProductCard(product) {
             </a>
 
         </article>
+    `;
+}
+
+
+// ============================================================
+// ADVANCED SECTIONS
+// ============================================================
+
+function renderAdvancedSections() {
+
+    /*
+     * این تابع اطلاعات پیشرفته را آماده می‌کند.
+     *
+     * اگر HTML این بخش‌ها را هنوز اضافه نکرده باشی،
+     * هیچ خطایی ایجاد نمی‌شود.
+     */
+
+    renderCategoryRanking();
+    renderTopMovers();
+    renderFreshBestSellers();
+    renderProductStatus();
+}
+
+
+// ============================================================
+// CATEGORY RANKING
+// ============================================================
+
+function renderCategoryRanking() {
+
+    const container =
+        document.getElementById(
+            "categoryRanking"
+        );
+
+    if (!container) {
+        return;
+    }
+
+    const stats = new Map();
+
+    for (const product of state.products) {
+
+        const categories =
+            Array.isArray(product.categories)
+                ? product.categories
+                : [];
+
+        for (const category of categories) {
+
+            const id =
+                String(category.id);
+
+            if (!stats.has(id)) {
+
+                stats.set(
+                    id,
+                    {
+                        id,
+                        name:
+                            category.name ||
+                            "بدون نام",
+                        count: 0,
+                        sold: 0
+                    }
+                );
+            }
+
+            const item =
+                stats.get(id);
+
+            item.count++;
+
+            item.sold +=
+                Number(
+                    product.sold_count || 0
+                );
+        }
+    }
+
+
+    const ranking =
+        [...stats.values()]
+            .sort(
+                (a, b) =>
+                    b.count - a.count
+            )
+            .slice(0, 20);
+
+
+    container.innerHTML =
+        ranking
+            .map(
+                (item, index) => `
+                    <div class="category-ranking-item">
+
+                        <span>
+                            #${formatNumber(
+                                index + 1
+                            )}
+                        </span>
+
+                        <strong>
+                            ${escapeHTML(
+                                item.name
+                            )}
+                        </strong>
+
+                        <small>
+                            ${formatNumber(
+                                item.count
+                            )}
+ محصول
+                        </small>
+
+                    </div>
+                `
+            )
+            .join("");
+}
+
+
+// ============================================================
+// MOVERS
+// ============================================================
+
+function getProductStats(id) {
+
+    if (
+        !state.stats ||
+        !state.stats.products
+    ) {
+        return null;
+    }
+
+    return (
+        state.stats.products[
+            String(id)
+        ] || null
+    );
+}
+
+
+function getRankChange(id) {
+
+    const stats =
+        getProductStats(id);
+
+    return Number(
+        stats?.rank_change || 0
+    );
+}
+
+
+function renderTopMovers() {
+
+    const growthContainer =
+        document.getElementById(
+            "topGrowth"
+        );
+
+    const declineContainer =
+        document.getElementById(
+            "topDecline"
+        );
+
+
+    if (
+        !growthContainer &&
+        !declineContainer
+    ) {
+        return;
+    }
+
+
+    const productsById =
+        new Map(
+            state.products.map(
+                product => [
+                    String(product.id),
+                    product
+                ]
+            )
+        );
+
+
+    const movers =
+        state.products
+            .map(product => {
+
+                const change =
+                    getRankChange(
+                        product.id
+                    );
+
+                return {
+                    product,
+                    change
+                };
+            });
+
+
+    const growth =
+        movers
+            .filter(
+                item =>
+                    item.change > 0
+            )
+            .sort(
+                (a, b) =>
+                    b.change - a.change
+            )
+            .slice(0, 10);
+
+
+    const decline =
+        movers
+            .filter(
+                item =>
+                    item.change < 0
+            )
+            .sort(
+                (a, b) =>
+                    a.change - b.change
+            )
+            .slice(0, 10);
+
+
+    if (growthContainer) {
+
+        growthContainer.innerHTML =
+            growth.length
+                ? growth
+                    .map(
+                        item =>
+                            createMoverHTML(
+                                item.product,
+                                item.change,
+                                true
+                            )
+                    )
+                    .join("")
+                : "<p>هنوز تاریخچه کافی وجود ندارد.</p>";
+    }
+
+
+    if (declineContainer) {
+
+        declineContainer.innerHTML =
+            decline.length
+                ? decline
+                    .map(
+                        item =>
+                            createMoverHTML(
+                                item.product,
+                                item.change,
+                                false
+                            )
+                    )
+                    .join("")
+                : "<p>هنوز تاریخچه کافی وجود ندارد.</p>";
+    }
+}
+
+
+function createMoverHTML(
+    product,
+    change,
+    positive
+) {
+
+    return `
+        <div class="mover-item">
+
+            <strong>
+                ${escapeHTML(
+                    truncate(
+                        product.name,
+                        35
+                    )
+                )}
+            </strong>
+
+            <span>
+                ${positive ? "↑" : "↓"}
+                ${formatNumber(
+                    Math.abs(change)
+                )}
+            </span>
+
+        </div>
+    `;
+}
+
+
+// ============================================================
+// FRESH BEST SELLERS
+// ============================================================
+
+function renderFreshBestSellers() {
+
+    const container =
+        document.getElementById(
+            "freshBestSellers"
+        );
+
+    if (!container) {
+        return;
+    }
+
+
+    const products =
+        [...state.products]
+            .sort(
+                (a, b) =>
+                    dateValue(
+                        b.created_at
+                    ) -
+                    dateValue(
+                        a.created_at
+                    )
+            )
+            .filter(
+                product =>
+                    Number(
+                        product.sold_count || 0
+                    ) > 0
+            )
+            .sort(
+                (a, b) =>
+                    Number(
+                        b.sold_count || 0
+                    ) -
+                    Number(
+                        a.sold_count || 0
+                    )
+            )
+            .slice(0, 10);
+
+
+    container.innerHTML =
+        products.length
+            ? products
+                .map(
+                    product =>
+                        `
+                        <div class="fresh-best-item">
+
+                            <strong>
+                                ${escapeHTML(
+                                    truncate(
+                                        product.name,
+                                        35
+                                    )
+                                )}
+                            </strong>
+
+                            <span>
+                                🔥
+                                ${formatNumber(
+                                    product.sold_count
+                                )}
+                            </span>
+
+                        </div>
+                        `
+                )
+                .join("")
+            : "<p>محصولی پیدا نشد.</p>";
+}
+
+
+// ============================================================
+// PRODUCT STATUS
+// ============================================================
+
+function renderProductStatus() {
+
+    const container =
+        document.getElementById(
+            "productStatus"
+        );
+
+    if (!container) {
+        return;
+    }
+
+
+    const total =
+        state.products.length;
+
+
+    const soldProducts =
+        state.products.filter(
+            product =>
+                Number(
+                    product.sold_count || 0
+                ) > 0
+        ).length;
+
+
+    const zeroSales =
+        total -
+        soldProducts;
+
+
+    const newProducts =
+        state.products.filter(
+            product =>
+                isRecent(
+                    product.created_at,
+                    30
+                )
+        ).length;
+
+
+    container.innerHTML = `
+        <div class="status-item">
+            <strong>
+                ${formatNumber(total)}
+            </strong>
+            <span>
+                کل محصولات
+            </span>
+        </div>
+
+        <div class="status-item">
+            <strong>
+                ${formatNumber(soldProducts)}
+            </strong>
+            <span>
+                دارای فروش
+            </span>
+        </div>
+
+        <div class="status-item">
+            <strong>
+                ${formatNumber(zeroSales)}
+            </strong>
+            <span>
+                بدون فروش
+            </span>
+        </div>
+
+        <div class="status-item">
+            <strong>
+                ${formatNumber(newProducts)}
+            </strong>
+            <span>
+                محصولات ۳۰ روز اخیر
+            </span>
+        </div>
     `;
 }
 
@@ -845,6 +1442,30 @@ function escapeAttribute(value) {
 }
 
 
+function isRecent(value, days) {
+
+    const time =
+        dateValue(value);
+
+    if (!time) {
+        return false;
+    }
+
+    const diff =
+        Date.now() - time;
+
+    return (
+        diff >= 0 &&
+        diff <=
+        days *
+        24 *
+        60 *
+        60 *
+        1000
+    );
+}
+
+
 function setLoading(isLoading) {
 
     elements.loadingText.textContent =
@@ -859,3 +1480,4 @@ function setLoading(isLoading) {
 // ============================================================
 
 loadData();
+```

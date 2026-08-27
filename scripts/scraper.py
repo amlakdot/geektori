@@ -64,7 +64,52 @@ def fetch_page(page_number: int) -> dict:
 
     response.raise_for_status()
 
-    return response.json()
+    data = response.json()
+
+    # ========================================================
+    # DEBUG - بررسی sold_count
+    # فقط برای صفحه اول
+    # ========================================================
+
+    if page_number == 1:
+
+        print()
+        print("=" * 70)
+        print("SOLD COUNT DEBUG")
+        print("=" * 70)
+
+        debug_products = (
+            data.get("result", {})
+            .get("products", [])
+        )
+
+        for product in debug_products[:10]:
+
+            product_id = product.get("id")
+            product_name = product.get("name")
+
+            variants = product.get(
+                "product_variants"
+            ) or []
+
+            variant_sales = [
+                variant.get("sold_count")
+                for variant in variants
+            ]
+
+            print(
+                f"ID: {product_id} | "
+                f"{product_name}"
+            )
+
+            print(
+                f"Variant sold_count: {variant_sales}"
+            )
+
+        print("=" * 70)
+        print()
+
+    return data
 
 
 # ============================================================
@@ -78,9 +123,13 @@ def get_sold_count(product: dict) -> int:
 
     total = 0
 
-    for variant in product.get("product_variants") or []:
+    for variant in product.get(
+        "product_variants"
+    ) or []:
 
-        sold_count = variant.get("sold_count") or 0
+        sold_count = variant.get(
+            "sold_count"
+        ) or 0
 
         try:
             total += int(sold_count)
@@ -94,25 +143,19 @@ def get_sold_count(product: dict) -> int:
 def extract_product(product: dict) -> dict:
     """
     فقط اطلاعات موردنیاز سایت را استخراج می‌کند.
-
-    اطلاعات سنگین API مثل:
-    - variants
-    - price
-    - sku
-    - attributes
-    - images
-    - commercial files
-    حذف می‌شوند.
     """
 
     categories = []
 
-    for category in product.get("product_categories") or []:
+    for category in product.get(
+        "product_categories"
+    ) or []:
 
         category_id = category.get("id")
         category_name = category.get("name")
 
         if category_id is not None:
+
             categories.append(
                 {
                     "id": category_id,
@@ -124,9 +167,19 @@ def extract_product(product: dict) -> dict:
         "id": product.get("id"),
         "name": product.get("name"),
         "url": product.get("url"),
-        "sold_count": get_sold_count(product),
-        "created_at": product.get("created_at"),
-        "updated_at": product.get("updated_at"),
+
+        "sold_count": get_sold_count(
+            product
+        ),
+
+        "created_at": product.get(
+            "created_at"
+        ),
+
+        "updated_at": product.get(
+            "updated_at"
+        ),
+
         "categories": categories,
     }
 
@@ -146,20 +199,30 @@ def fetch_all_products() -> list[dict]:
 
     while True:
 
-        print(f"Fetching page {page}...")
+        print(
+            f"Fetching page {page}..."
+        )
 
         try:
-            data = fetch_page(page)
+
+            data = fetch_page(
+                page
+            )
 
         except requests.RequestException as error:
 
-            print(f"Request failed on page {page}: {error}")
+            print(
+                f"Request failed on page {page}: {error}"
+            )
 
             # یک بار تلاش مجدد
             time.sleep(2)
 
             try:
-                data = fetch_page(page)
+
+                data = fetch_page(
+                    page
+                )
 
             except requests.RequestException as retry_error:
 
@@ -167,20 +230,30 @@ def fetch_all_products() -> list[dict]:
                     f"Failed to fetch page {page}: {retry_error}"
                 ) from retry_error
 
-        result = data.get("result") or {}
+        result = (
+            data.get("result")
+            or {}
+        )
 
-        page_products = result.get("products") or []
+        page_products = (
+            result.get("products")
+            or []
+        )
 
         if not page_products:
 
-            print("No more products.")
+            print(
+                "No more products."
+            )
 
             break
 
         for product in page_products:
 
             products.append(
-                extract_product(product)
+                extract_product(
+                    product
+                )
             )
 
         print(
@@ -193,7 +266,9 @@ def fetch_all_products() -> list[dict]:
 
         page += 1
 
-        time.sleep(REQUEST_DELAY)
+        time.sleep(
+            REQUEST_DELAY
+        )
 
     return products
 
@@ -202,23 +277,76 @@ def fetch_all_products() -> list[dict]:
 # SNAPSHOT
 # ============================================================
 
-def create_snapshot(products: list[dict]) -> dict:
+def create_snapshot(
+    products: list[dict]
+) -> dict:
     """
     ساخت Snapshot نهایی.
-
-    محصولات بر اساس فروش مرتب می‌شوند
-    و rank دریافت می‌کنند.
     """
 
-    now = datetime.now(timezone.utc)
-
-    products.sort(
-        key=lambda product: (
-            product.get("sold_count") or 0,
-            product.get("created_at") or "",
-        ),
-        reverse=True,
+    now = datetime.now(
+        timezone.utc
     )
+
+    # --------------------------------------------------------
+    # بررسی اینکه آیا API واقعاً فروش غیرصفر داده
+    # --------------------------------------------------------
+
+    has_real_sales = any(
+        (
+            product.get(
+                "sold_count"
+            ) or 0
+        ) > 0
+
+        for product in products
+    )
+
+    # --------------------------------------------------------
+    # اگر فروش واقعی وجود داشته باشد:
+    # مرتب‌سازی بر اساس فروش
+    # --------------------------------------------------------
+
+    if has_real_sales:
+
+        products.sort(
+            key=lambda product: (
+                product.get(
+                    "sold_count"
+                ) or 0,
+
+                product.get(
+                    "created_at"
+                ) or "",
+            ),
+
+            reverse=True,
+        )
+
+    else:
+
+        # ----------------------------------------------------
+        # اگر همه sold_count صفر باشند،
+        # ترتیب API حفظ می‌شود.
+        #
+        # چون API با sort=sold درخواست شده،
+        # فعلاً نباید ترتیب API را خراب کنیم.
+        # ----------------------------------------------------
+
+        print()
+        print(
+            "WARNING: All sold_count values are 0."
+        )
+
+        print(
+            "Keeping API order instead of sorting by created_at."
+        )
+
+        print()
+
+    # --------------------------------------------------------
+    # Rank
+    # --------------------------------------------------------
 
     for index, product in enumerate(
         products,
@@ -226,6 +354,10 @@ def create_snapshot(products: list[dict]) -> dict:
     ):
 
         product["rank"] = index
+
+    # --------------------------------------------------------
+    # Snapshot
+    # --------------------------------------------------------
 
     return {
         "updated_at": now.isoformat(),
@@ -235,7 +367,9 @@ def create_snapshot(products: list[dict]) -> dict:
             "name": CATEGORY_NAME,
         },
 
-        "total_products": len(products),
+        "total_products": len(
+            products
+        ),
 
         "products": products,
     }
@@ -245,12 +379,12 @@ def create_snapshot(products: list[dict]) -> dict:
 # SAVE
 # ============================================================
 
-def write_json(file_path: Path, data: dict) -> None:
+def write_json(
+    file_path: Path,
+    data: dict
+) -> None:
     """
     JSON فشرده برای کاهش حجم فایل.
-
-    indent حذف شده تا current.json
-    تا حد ممکن کوچک باشد.
     """
 
     with file_path.open(
@@ -266,7 +400,9 @@ def write_json(file_path: Path, data: dict) -> None:
         )
 
 
-def save_data(snapshot: dict) -> None:
+def save_data(
+    snapshot: dict
+) -> None:
     """
     ذخیره current.json و Snapshot تاریخی.
     """
@@ -294,10 +430,13 @@ def save_data(snapshot: dict) -> None:
     # HISTORY
     # --------------------------------------------------------
 
-    timestamp = datetime.now(timezone.utc)
+    timestamp = datetime.now(
+        timezone.utc
+    )
 
-    history_file = HISTORY_DIR / (
-        f"{timestamp.strftime('%Y-%m-%d_%H-%M-%S')}.json"
+    history_file = (
+        HISTORY_DIR
+        / f"{timestamp.strftime('%Y-%m-%d_%H-%M-%S')}.json"
     )
 
     write_json(
@@ -321,7 +460,9 @@ def save_data(snapshot: dict) -> None:
 def main() -> None:
 
     print("=" * 50)
-    print("Geektori scraper started")
+    print(
+        "Geektori scraper started"
+    )
     print("=" * 50)
 
     products = fetch_all_products()

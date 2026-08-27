@@ -1,1 +1,192 @@
+```html
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
 
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="آرشیو و بررسی محصولات گیگتوری"
+    >
+
+    <title>Geektori Explorer</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <header class="header">
+        <div class="container header-inner">
+
+            <div>
+                <div class="brand">GEEKTORI</div>
+                <div class="subtitle">Product Explorer</div>
+            </div>
+
+            <div class="status">
+                <span class="status-dot"></span>
+                <span id="statusText">در حال دریافت اطلاعات...</span>
+            </div>
+
+        </div>
+    </header>
+
+
+    <main class="container">
+
+        <!-- Hero -->
+        <section class="hero">
+
+            <div>
+                <span class="eyebrow">GEekTori DATA</span>
+
+                <h1>
+                    آرشیو محصولات
+                    <span>گیگتوری</span>
+                </h1>
+
+                <p>
+                    جستجو، بررسی و مرتب‌سازی محصولات موجود در دیتابیس گیگتوری.
+                </p>
+            </div>
+
+        </section>
+
+
+        <!-- Statistics -->
+        <section class="stats">
+
+            <div class="stat-card">
+                <span class="stat-label">کل محصولات</span>
+                <strong id="totalProducts">—</strong>
+            </div>
+
+            <div class="stat-card">
+                <span class="stat-label">محصولات نمایش داده‌شده</span>
+                <strong id="visibleProducts">—</strong>
+            </div>
+
+            <div class="stat-card">
+                <span class="stat-label">دسته‌بندی اصلی</span>
+                <strong id="categoryName">—</strong>
+            </div>
+
+            <div class="stat-card">
+                <span class="stat-label">آخرین بروزرسانی</span>
+                <strong id="updatedAt">—</strong>
+            </div>
+
+        </section>
+
+
+        <!-- Controls -->
+        <section class="controls">
+
+            <div class="search-box">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                >
+                    <path
+                        d="M21 21l-4.35-4.35m1.35-5.65a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
+                </svg>
+
+                <input
+                    id="searchInput"
+                    type="search"
+                    placeholder="جستجوی محصول..."
+                    autocomplete="off"
+                >
+
+            </div>
+
+
+            <select id="categoryFilter">
+                <option value="all">همه دسته‌بندی‌ها</option>
+            </select>
+
+
+            <select id="sortSelect">
+                <option value="rank">پرفروش‌ترین</option>
+                <option value="newest">جدیدترین</option>
+                <option value="oldest">قدیمی‌ترین</option>
+                <option value="sold">تعداد فروش</option>
+                <option value="name">نام محصول</option>
+            </select>
+
+        </section>
+
+
+        <!-- Result info -->
+        <section class="result-bar">
+
+            <div>
+                <strong id="resultCount">۰ محصول</strong>
+                <span id="searchInfo"></span>
+            </div>
+
+            <button id="clearFilters" class="clear-btn">
+                پاک کردن فیلترها
+            </button>
+
+        </section>
+
+
+        <!-- Products -->
+        <section id="productsGrid" class="products-grid"></section>
+
+
+        <!-- Empty -->
+        <section id="emptyState" class="empty-state hidden">
+
+            <div class="empty-icon">⌕</div>
+
+            <h2>محصولی پیدا نشد</h2>
+
+            <p>
+                عبارت جستجو یا فیلترهای انتخاب‌شده را تغییر بده.
+            </p>
+
+        </section>
+
+
+        <!-- Pagination -->
+        <nav
+            id="pagination"
+            class="pagination"
+            aria-label="صفحه‌بندی"
+        ></nav>
+
+    </main>
+
+
+    <footer class="footer">
+
+        <div class="container">
+
+            <span>
+                Geektori Explorer
+            </span>
+
+            <span id="footerUpdated">
+                —
+            </span>
+
+        </div>
+
+    </footer>
+
+
+    <script src="app.js"></script>
+
+</body>
+</html>
+```
